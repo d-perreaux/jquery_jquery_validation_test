@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>JQUERY</h1>
+
+    <div id="jquery-content">Jquery-content</div>
+    <input type="text" />
+
+    <button id="hide-content">Masquer l'élement</button>
+    <button id="show-content">Montrer l'élement</button>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Déclaration de variable
+        $name = "Bobby";
+        $number = 45;
+
+        //utilisation de variables
+        if ($number == 45) {
+          alert("Bonjour " + $name + ", jquery is ready");
+        }
+
+        $("#hide-content").click(function () {
+          $("#jquery-content").hide();
+        });
+
+        // Délégation d'une responsabilité de body vers un évènement (event propagation)
+        $("body").on("click", "#show-content", function() {
+          $("#jquery-content").show();
+        })
+
+        // $("#show-content").click(function () {
+        //   $("#jquery-content").show();
+        // });
+
+        // children() Get all the child elements of the specified element(s)
+
+        // each() Iterate over specified elements and execute specified call back function
+        // find() Get all the specified child elements of each specified element(s)
+        // first() Get the first occurence of tje specified element
+        // next() Get the immediately following sibling of the specified elemet
+        // parent() Get the parent of tje specified element(s)
+        // prev() Get the immediately preceding sibling of tje specified element.
+        // siblings() Get the siblings of each specified element(s)
+      });
+    </script>
+  </body>
+</html>
