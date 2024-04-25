@@ -131,16 +131,20 @@
           if (nir.length === 13 && cleSaisie.length > 0) {
             var cleCalculee = calculerCleNIR(nir);
 
-            if (parseInt(cleSaisie, 10) !== cleCalculee) {
+            if (parseInt(cleSaisie, 10) === cleCalculee) {
+              return true; // NIR et clé sont valides
+            } else if (parseInt(cleSaisie, 10) !== cleCalculee) {
               messageErreur = "La clé n'est pas valide pour le NIR saisi.";
-              $("#keyError").text(messageErreur); // Affiche le message d'erreur
+              $("#keyError").text(messageErreur);
+              return false;
             }
           } else if (cleSaisie.length > 0) {
             messageErreur =
               "Le NIR doit être composé de 13 chiffres afin de vérifier la clé.";
-            $("#keyError").text(messageErreur); // Affiche le message d'erreur
+            $("#keyError").text(messageErreur);
+            return false;
           } else {
-            return cleCalculee;
+            return false;
           }
         }
 
@@ -343,7 +347,9 @@
         });
         $("#birthplaceForm").on("submit", function (e) {
           e.preventDefault(); // Empêcher la soumission automatique du formulaire
-          verifierNIR(); // Appel de la fonction de vérification du NIR
+          if(verifierNIR()) { // Appel de la fonction de vérification du NIR
+            this.submit();
+          }; 
         });
 
         adjustValidationRules();
