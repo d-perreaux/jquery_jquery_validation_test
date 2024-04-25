@@ -26,7 +26,7 @@
           <label for="contactform_email">Envoyer des e-mails de contact</label>
         </div>
         <div>
-          <button type="submit">Envoyer</button>
+          <button id="form-button" type="submit">Envoyer</button>
         </div>
       </form>
       
@@ -49,6 +49,13 @@ $(document).ready(function() {
       $('#email').rules('remove');
     }
   });
+  var boutonClique = false;
+  console.log(boutonClique);
+
+  $("#form-button").on("click", function() {
+    boutonClique = true;
+    console.log(boutonClique);
+  })
 
   $('#myform').validate({
     rules: {

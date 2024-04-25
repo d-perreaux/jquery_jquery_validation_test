@@ -6,15 +6,8 @@
     <title>NIR Validation</title>
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
   </head>
-  <style>
-    /* Cache les messages d'erreur par défaut */
-    .hidden {
-      display: none !important;
-    }
-
-  </style>
-
   <body>
     <h1>Validation NIR</h1>
     <form id="birthplaceForm">
@@ -71,7 +64,7 @@
         <input type="checkbox" id="unknownMonth" name="unknownMonth" />
         <label for="unknownMonth"
           >Cochez si le mois de naissance est inconnu pour pouvoir saisir le
-          code</label
+          code 99</label
         >
       </div>
       <div>
@@ -96,294 +89,244 @@
       </div>
 
       <div>
-        <button type="submit">Envoyer</button>
+        <button id="form-button" type="submit">Envoyer</button>
       </div>
     </form>
 
     <script>
-          $(document).ready(function () {
-            var formSubmitted = false;
-            console.log(formSubmitted); // Indicateur pour suivre si le formulaire a été soumis
-            $.validator.setDefaults({
-              errorClass: "hidden", // Ajoutez la classe 'hidden' par défaut aux erreurs
+      $(document).ready(function () {
+        var tentativeEnvoie = false;
 
-              // Définissez comment les erreurs sont placées dans le DOM
-              errorPlacement: function (error, element) {
-                error.insertAfter(element);
-                error.removeClass("hidden"); // Enlevez la classe 'hidden' dès qu'une erreur est créée
-              },
+        function verifierNIR() {
+          var messageErreur = "";
+          $("#keyError").empty(); // Nettoie les messages d'erreur précédents
 
-              // Définissez ce qui arrive lorsqu'un champ est validé
-              success: function (label) {
-                label.addClass("hidden"); // Si le champ est valide, cachez le message d'erreur
-              },
+          // Récupère les valeurs des champs
+          var sexe = $("#sex").val();
+          var anneeNaissance = $("#yearOfBirth").val();
+          var moisNaissance = $("#monthOfBirth").val();
+          var departementNaissance = $("#department").val();
+          var communeNaissance = $("#municipality").val();
+          var ordreNaissance = $("#orderNumber").val();
+          var cléSaisie = $("#key").val();
 
-              // Quand le formulaire est soumis, assurez-vous de montrer les erreurs si elles existent
-              invalidHandler: function (event, validator) {
-                $(".error").removeClass("hidden");
-              },
+          // Concatène les valeurs pour former le NIR
+          var nir =
+            sexe +
+            anneeNaissance +
+            moisNaissance +
+            departementNaissance +
+            communeNaissance +
+            ordreNaissance;
 
-              // Autres options et gestionnaires de validation...
-            });
+          // Vérifie si le NIR est bien composé de 13 chiffres et si la clé est saisie
+          if (nir.length === 13 && cléSaisie.length > 0) {
+            var nirSansClé = parseInt(nir, 10);
+            var cléCalculée = 97 - (nirSansClé % 97);
 
-            function verifierNIR() {
-              var messageErreur = "";
-              $("#keyError").empty(); // Nettoie les messages d'erreur précédents
-
-              // Récupère les valeurs des champs
-              var sexe = $("#sex").val();
-              var anneeNaissance = $("#yearOfBirth").val();
-              var moisNaissance = $("#monthOfBirth").val();
-              var departementNaissance = $("#department").val();
-              var communeNaissance = $("#municipality").val();
-              var ordreNaissance = $("#orderNumber").val();
-              var cléSaisie = $("#key").val();
-
-              // Concatène les valeurs pour former le NIR
-              var nir =
-                sexe +
-                anneeNaissance +
-                moisNaissance +
-                departementNaissance +
-                communeNaissance +
-                ordreNaissance;
-
-              // Vérifie si le NIR est bien composé de 13 chiffres et si la clé est saisie
-              if (nir.length === 13 && cléSaisie.length > 0) {
-                var nirSansClé = parseInt(nir, 10);
-                var cléCalculée = 97 - (nirSansClé % 97);
-
-                if (parseInt(cléSaisie, 10) !== cléCalculée) {
-                  messageErreur = "La clé n'est pas valide pour le NIR saisi.";
-                  $("#keyError").text(messageErreur); // Affiche le message d'erreur
-                }
-              } else if (cléSaisie.length > 0) {
-                messageErreur =
-                  "Le NIR doit être composé de 13 chiffres avant de vérifier la clé.";
-                $("#keyError").text(messageErreur); // Affiche le message d'erreur
-              }
-              $(
-                "#sex, #yearOfBirth, #monthOfBirth, #department, #municipality, #orderNumber, #key"
-              ).on("input", verifierNIR);
+            if (parseInt(cléSaisie, 10) !== cléCalculée) {
+              messageErreur = "La clé n'est pas valide pour le NIR saisi.";
+              $("#keyError").text(messageErreur); // Affiche le message d'erreur
             }
-
-            // Fonction pour ajuster les règles de validation
-            function adjustValidationRules() {
-              var isMonthUnknown = $("#unknownMonth").is(":checked");
-              var birthplace = $('input[name="birthplace"]:checked').val();
-
-              // Règles par défaut
-              var sexRules = {
-                required: true,
-                digits: true,
-                range: [1, 2],
-              };
-
-              var yearOfBirthRules = {
-                required: true,
-                digits: true,
-                rangelength: [2, 2],
-                range: [0, 99],
-              };
-
-              var monthOfBirthRules = {
-                required: true,
-                digits: true,
-                rangelength: [2, 2],
-                range: isMonthUnknown ? [99, 99] : [1, 12],
-              };
-
-              var departmentRules = {
-                required: true,
-                digits: true,
-                rangelength: [2, 2],
-              };
-
-              var municipalityRules = {
-                required: true,
-                digits: true,
-                rangelength: [3, 3],
-                range: [1, 999],
-              };
-
-              var orderNumberRules = {
-                required: true,
-                digits: true,
-                rangelength: [3, 3],
-              };
-
-              // Messages par défaut
-              var sexMessages = {
-                required: "Veuillez indiquer votre sexe",
-                digits: "La valeur doit être un chiffre",
-                range: "1 ou 2",
-              };
-
-              var yearOfBirthMessages = {
-                required: "L'année de naissance est obligatoire",
-                digits: "L'année de naissance doit être composée de 2 chiffres",
-                rangelength: "L'année de naissance doit être composé de 2 chiffres",
-                range: "L'année de naissance doit être comprise entre 00 et 99",
-              };
-
-              var monthOfBirthMessages = {
-                required: "Le mois de naissance est obligatoire",
-                digits: "Le mois de naissance doit être composé de 2 chiffres",
-                rangelength: "Le mois de naissance doit être composé de 2 chiffres",
-                range: isMonthUnknown
-                  ? "Le mois de naissance doit être 99."
-                  : "Le mois de naissance doit être compris entre 01 et 12",
-              };
-
-              var departmentMessages = {
-                required: "Veuillez saisir votre département de naissance",
-                digits: "Le département doit être composé de 2 chiffres",
-                rangelength:
-                  "Le département doit être composé exactement de 2 chiffres",
-              };
-
-              var municipalityMessages = {
-                required: "Veuillez saisir votre commune de naissance",
-                digits: "La commune doit être composée de chiffres",
-                rangelength:
-                  "La commune doit être composée exactement de 3 chiffres",
-                range: "La commune doit être entre 001 et 989",
-              };
-
-              var orderNumberMessages = {
-                required: "Le numéro d'ordre est obligatoire",
-                digits: "Le numéro d'ordre doit être composé de 3 chiffres",
-                rangelength:
-                  "Le numéro d'ordre doit être composé exactement de 3 chiffres",
-              };
-
-              // Ajustements pour Outre-Mer
-              if (birthplace === "Overseas") {
-                departmentRules.rangelength = [3, 3];
-                municipalityRules.rangelength = [2, 2];
-                departmentMessages.rangelength =
-                  "Le département doit être composé exactement de 3 chiffres";
-                municipalityMessages.rangelength =
-                  "La commune doit être composée exactement de 2 chiffres";
-              }
-
-              // Ajustements pour Corse
-              if (birthplace === "Corsica") {
-                departmentRules = {
-                  required: true,
-                  // Utilisation de 'pattern' pour 2A ou 2B
-                  pattern: /^(2A|2B)$/,
-                };
-                departmentMessages = {
-                  required: "Veuillez saisir votre département de naissance",
-                  pattern: "Le département doit être 2A ou 2B pour la Corse",
-                };
-                // Ajustement des limites pour les communes en Corse
-                municipalityRules.range = [1, 989];
-              }
-
-              // Application des règles
-              $("#birthplaceForm").validate().settings.rules["sex"] = sexRules;
-              $("#birthplaceForm").validate().settings.rules["yearOfBirth"] =
-                yearOfBirthRules;
-              $("#monthOfBirth").rules("remove");
-              $("#birthplaceForm").validate().settings.rules["monthOfBirth"] =
-                monthOfBirthRules;
-              $("#birthplaceForm").validate().settings.rules["department"] =
-                departmentRules;
-              $("#birthplaceForm").validate().settings.rules["municipality"] =
-                municipalityRules;
-              $("#birthplaceForm").validate().settings.rules["orderNumber"] =
-                orderNumberRules;
-
-              // Application des messages
-              $("#birthplaceForm").validate().settings.messages["sex"] =
-                sexMessages;
-              $("#birthplaceForm").validate().settings.messages["yearOfBirth"] =
-                yearOfBirthMessages;
-              $("#birthplaceForm").validate().settings.messages["monthOfBirth"] =
-                monthOfBirthMessages;
-              $("#birthplaceForm").validate().settings.messages["department"] =
-                departmentMessages;
-              $("#birthplaceForm").validate().settings.messages["municipality"] =
-                municipalityMessages;
-              $("#birthplaceForm").validate().settings.messages["orderNumber"] =
-                orderNumberMessages;
-
-              // Revalidation
-              $("#sex").valid();
-              $("#yearOfBirth").valid();
-              $("#monthOfBirth").valid();
-              $("#department").valid();
-              $("#municipality").valid();
-              $("#orderNumber").valid();
-            }
-
-            // Initialisation de la validation pour le formulaire
-            $("#birthplaceForm").validate({
-
-        // ... Votre configuration actuelle de validate ...
-        submitHandler: function (form) {
-          formSubmitted = true;
-          console.log(formSubmitted); // Marque le formulaire comme ayant été soumis
-          form.submit();
-        },
-        invalidHandler: function (event, validator) {
-          formSubmitted = true;
-          // Ajoute la classe 'invalid' aux champs invalides
-          validator.errorList.forEach(function (error) {
-            $(error.element).addClass('invalid');
-          });
-        },
-        highlight: function (element, errorClass, validClass) {
-          if (formSubmitted) {
-            // Montre l'erreur seulement après la soumission
-            $(element).next('label.error').show();
-            $(element).addClass('invalid');
+          } else if (cléSaisie.length > 0) {
+            messageErreur =
+              "Le NIR doit être composé de 13 chiffres afin de vérifier la clé.";
+            $("#keyError").text(messageErreur); // Affiche le message d'erreur
           }
-        },
-        unhighlight: function (element, errorClass, validClass) {
-          $(element).next('label.error').hide();
-          $(element).removeClass('invalid');
-        },
+          $(
+            "#sex, #yearOfBirth, #monthOfBirth, #department, #municipality, #orderNumber, #key"
+          ).on("input", verifierNIR);
+        }
 
-              rules: {
-                birthplace: {
-                  required: true,
-                },
-              },
-              messages: {
-                birthplace: {
-                  required: "Veuillez sélectionner votre lieu de naissance",
-                },
-              },
-              errorPlacement: function (error, element) {
-                if (element.attr("name") == "birthplace") {
-                  error.insertAfter("#birthplaceGroup div:last"); // Place l'erreur après le dernier bouton radio
-                } else {
-                  error.insertAfter(element); // Pour les autres éléments, place l'erreur après l'élément
-                }
-              },
-            });
+        // Fonction pour ajuster les règles de validation
+        function adjustValidationRules() {
+          var isMonthUnknown = $("#unknownMonth").is(":checked");
+          var birthplace = $('input[name="birthplace"]:checked').val();
 
-            // Gère le clic sur les boutons radio de lieu de naissance pour revalider le formulaire
-            $('input[name="birthplace"]').on("click", function () {
-              // Ajuste les règles si nécessaire
-              adjustValidationRules();
+          // Règles par défaut
+          var sexRules = {
+            required: true,
+            digits: true,
+            range: [1, 2],
+          };
 
-              // Revalide seulement après un clic sur les boutons radio "birthplace"
-              $("#sex").valid();
-              $("#yearOfBirth").valid();
-              $("#monthOfBirth").valid();
-              $("#department").valid();
-              $("#municipality").valid();
-              $("#orderNumber").valid();
-            });
+          var yearOfBirthRules = {
+            required: true,
+            digits: true,
+            rangelength: [2, 2],
+            range: [0, 99],
+          };
 
-            // Appel initial pour configurer les règles selon la sélection par défaut
-            $("#unknownMonth").change(adjustValidationRules);
-            adjustValidationRules();
+          var monthOfBirthRules = {
+            required: true,
+            digits: true,
+            rangelength: [2, 2],
+            range: isMonthUnknown ? [99, 99] : [1, 12],
+          };
+
+          var departmentRules = {
+            required: true,
+            digits: true,
+            rangelength: [2, 2],
+          };
+
+          var municipalityRules = {
+            required: true,
+            digits: true,
+            rangelength: [3, 3],
+            range: [1, 999],
+          };
+
+          var orderNumberRules = {
+            required: true,
+            digits: true,
+            rangelength: [3, 3],
+          };
+
+          // Messages par défaut
+          var sexMessages = {
+            required: "Veuillez indiquer votre sexe",
+            digits: "La valeur doit être un chiffre",
+            range: "1 ou 2",
+          };
+
+          var yearOfBirthMessages = {
+            required: "L'année de naissance est obligatoire",
+            digits: "L'année de naissance doit être composée de 2 chiffres",
+            rangelength: "L'année de naissance doit être composé de 2 chiffres",
+            range: "L'année de naissance doit être comprise entre 00 et 99",
+          };
+
+          var monthOfBirthMessages = {
+            required: "Le mois de naissance est obligatoire",
+            digits: "Le mois de naissance doit être composé de 2 chiffres",
+            rangelength: "Le mois de naissance doit être composé de 2 chiffres",
+            range: isMonthUnknown
+              ? "Le mois de naissance doit être 99."
+              : "Le mois de naissance doit être compris entre 01 et 12",
+          };
+
+          var departmentMessages = {
+            required: "Veuillez saisir votre département de naissance",
+            digits: "Le département doit être composé de 2 ou 3 chiffres",
+            rangelength:
+              "Le département doit être composé exactement de 2 chiffres",
+          };
+
+          var municipalityMessages = {
+            required: "Veuillez saisir votre commune de naissance",
+            digits: "La commune doit être composée de chiffres",
+            rangelength:
+              "La commune doit être composée exactement de 3 chiffres",
+            range: "La commune doit être entre 001 et 989",
+          };
+
+          var orderNumberMessages = {
+            required: "Le numéro d'ordre est obligatoire",
+            digits: "Le numéro d'ordre doit être composé de 3 chiffres",
+            rangelength:
+              "Le numéro d'ordre doit être composé exactement de 3 chiffres",
+          };
+
+          // Ajustements pour Outre-Mer
+          if (birthplace === "Overseas") {
+            departmentRules.rangelength = [3, 3];
+            municipalityRules.rangelength = [2, 2];
+            departmentMessages.rangelength =
+              "Le département doit être composé exactement de 3 chiffres";
+            municipalityMessages.rangelength =
+              "La commune doit être composée exactement de 2 chiffres";
+          }
+
+          // Ajustements pour Corse
+          if (birthplace === "Corsica") {
+            departmentRules = {
+              required: true,
+              // Utilisation de 'pattern' pour 2A ou 2B
+              pattern: /^(2A|2B)$/,
+            };
+            departmentMessages = {
+              required: "Veuillez saisir votre département de naissance",
+              pattern: "Le département doit être 2A ou 2B pour la Corse",
+            };
+            // Ajustement des limites pour les communes en Corse
+            municipalityRules.range = [1, 989];
+          }
+
+          // Application des règles
+          $("#birthplaceForm").validate().settings.rules["sex"] = sexRules;
+          $("#birthplaceForm").validate().settings.rules["yearOfBirth"] =
+            yearOfBirthRules;
+          $("#monthOfBirth").rules("remove");
+          $("#birthplaceForm").validate().settings.rules["monthOfBirth"] =
+            monthOfBirthRules;
+          $("#birthplaceForm").validate().settings.rules["department"] =
+            departmentRules;
+          $("#birthplaceForm").validate().settings.rules["municipality"] =
+            municipalityRules;
+          $("#birthplaceForm").validate().settings.rules["orderNumber"] =
+            orderNumberRules;
+
+          // Application des messages
+          $("#birthplaceForm").validate().settings.messages["sex"] =
+            sexMessages;
+          $("#birthplaceForm").validate().settings.messages["yearOfBirth"] =
+            yearOfBirthMessages;
+          $("#birthplaceForm").validate().settings.messages["monthOfBirth"] =
+            monthOfBirthMessages;
+          $("#birthplaceForm").validate().settings.messages["department"] =
+            departmentMessages;
+          $("#birthplaceForm").validate().settings.messages["municipality"] =
+            municipalityMessages;
+          $("#birthplaceForm").validate().settings.messages["orderNumber"] =
+            orderNumberMessages;
+        }
+
+        // Initialisation de la validation pour le formulaire
+        $("#birthplaceForm").validate({
+          rules: {
+            birthplace: {
+              required: true,
+            },
+          },
+          messages: {
+            birthplace: {
+              required: "Veuillez sélectionner votre lieu de naissance",
+            },
+          },
+          errorPlacement: function (error, element) {
+            if (element.attr("name") == "birthplace") {
+              error.insertAfter("#birthplaceGroup div:last"); // Place l'erreur après le dernier bouton radio
+            } else {
+              error.insertAfter(element); // Pour les autres éléments, place l'erreur après l'élément
+            }
+          },
+        });
+
+        // Gère le clic sur les boutons radio de lieu de naissance pour revalider le formulaire
+        $('input[name="birthplace"]').on("click", function () {
+          // Ajuste les règles si nécessaire
+          adjustValidationRules();
+
+          // Valide seulement les champs qui ne sont pas vides
+          $(
+            "#sex, #yearOfBirth, #monthOfBirth, #department, #municipality, #orderNumber"
+          ).each(function () {
+            if ($(this).val()) {
+              $(this).valid();
+            }
           });
+        });
+
+        $("#unknownMonth").on("click", function () {
+          adjustValidationRules();
+          // Revalider directement le champ au clique sur la checkbox
+          $("#monthOfBirth").valid();
+        });
+
+        adjustValidationRules();
+        verifierNIR();
+      });
     </script>
   </body>
 </html>
