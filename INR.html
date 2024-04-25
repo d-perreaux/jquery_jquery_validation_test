@@ -10,6 +10,7 @@
   </head>
   <body>
     <h1>Validation NIR</h1>
+    <div>NIR dimitri : 1 86 10 95 176 050 29</div>
     <form id="birthplaceForm">
       <div id="birthplaceGroup">
         <label>Lieu de naissance:</label>
@@ -97,6 +98,13 @@
       $(document).ready(function () {
         var tentativeEnvoie = false;
 
+        function calculerCleNIR(nir) {
+          var nirSansCle = parseInt(nir, 10);
+          // Calcul de la clé à l'aide de la formule spécifique
+          var cleCalculee = 97 - (nirSansCle % 97);
+          return cleCalculee;
+        }
+
         function verifierNIR() {
           var messageErreur = "";
           $("#keyError").empty(); // Nettoie les messages d'erreur précédents
@@ -108,7 +116,7 @@
           var departementNaissance = $("#department").val();
           var communeNaissance = $("#municipality").val();
           var ordreNaissance = $("#orderNumber").val();
-          var cléSaisie = $("#key").val();
+          var cleSaisie = $("#key").val();
 
           // Concatène les valeurs pour former le NIR
           var nir =
@@ -120,23 +128,25 @@
             ordreNaissance;
 
           // Vérifie si le NIR est bien composé de 13 chiffres et si la clé est saisie
-          if (nir.length === 13 && cléSaisie.length > 0) {
-            var nirSansClé = parseInt(nir, 10);
-            var cléCalculée = 97 - (nirSansClé % 97);
+          if (nir.length === 13 && cleSaisie.length > 0) {
+            var cleCalculee = calculerCleNIR(nir);
 
-            if (parseInt(cléSaisie, 10) !== cléCalculée) {
+            if (parseInt(cleSaisie, 10) !== cleCalculee) {
               messageErreur = "La clé n'est pas valide pour le NIR saisi.";
               $("#keyError").text(messageErreur); // Affiche le message d'erreur
             }
-          } else if (cléSaisie.length > 0) {
+          } else if (cleSaisie.length > 0) {
             messageErreur =
               "Le NIR doit être composé de 13 chiffres afin de vérifier la clé.";
             $("#keyError").text(messageErreur); // Affiche le message d'erreur
+          } else {
+            return cleCalculee;
           }
-          $(
-            "#sex, #yearOfBirth, #monthOfBirth, #department, #municipality, #orderNumber, #key"
-          ).on("input", verifierNIR);
         }
+
+        $("#key").on("input", function () {
+          $("#keyError").empty(); // Efface le message d'erreur de la clé du NIR dès que l'utilisateur tape dans le champ clé
+        });
 
         // Fonction pour ajuster les règles de validation
         function adjustValidationRules() {
@@ -288,10 +298,18 @@
             birthplace: {
               required: true,
             },
+            key: {
+              required: true,
+              digits: true,
+            },
           },
           messages: {
             birthplace: {
               required: "Veuillez sélectionner votre lieu de naissance",
+            },
+            key: {
+              required: "Veuillez saisir la clé",
+              digits: "La clé doit être composé de 2 chiffres",
             },
           },
           errorPlacement: function (error, element) {
@@ -323,9 +341,12 @@
           // Revalider directement le champ au clique sur la checkbox
           $("#monthOfBirth").valid();
         });
+        $("#birthplaceForm").on("submit", function (e) {
+          e.preventDefault(); // Empêcher la soumission automatique du formulaire
+          verifierNIR(); // Appel de la fonction de vérification du NIR
+        });
 
         adjustValidationRules();
-        verifierNIR();
       });
     </script>
   </body>
